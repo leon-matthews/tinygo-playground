@@ -1,0 +1,7 @@
+# Build
+*.elf
+*.uf2
+
+# Editor
+*.geany
+.idea/
