@@ -20,6 +20,8 @@ func main() {
 	colors := make([]color.RGBA, 1, 1)
 
 	for {
+        println("CPU frequency:", machine.CPUFrequency()/1e6, "MHz")
+
 		println("Red!")
 		colors[0] = red
 		neo.WriteColors(colors)
