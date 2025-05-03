@@ -1,0 +1,8 @@
+github.com/soypat/cyw43439 v0.0.0-20250106095300-90bf0c1db251 h1:P8Rt1H5le87jl204evlL3ARPOap3FatoNlZkhBNRTm4=
+github.com/soypat/cyw43439 v0.0.0-20250106095300-90bf0c1db251/go.mod h1:1Otjk6PRhfzfcVHeWMEeku/VntFqWghUwuSQyivb2vE=
+github.com/soypat/seqs v0.0.0-20250103132650-f7090396d4a4 h1:zz8k3ux1FT0Go1WcejSI7uVJhraRmknIdnDhOFYRPxM=
+github.com/soypat/seqs v0.0.0-20250103132650-f7090396d4a4/go.mod h1:oCVCNGCHMKoBj97Zp9znLbQ1nHxpkmOY9X+UAGzOxc8=
+github.com/tinygo-org/pio v0.0.0-20231216154340-cd888eb58899 h1:/DyaXDEWMqoVUVEJVJIlNk1bXTbFs8s3Q4GdPInSKTQ=
+github.com/tinygo-org/pio v0.0.0-20231216154340-cd888eb58899/go.mod h1:LU7Dw00NJ+N86QkeTGjMLNkYcEYMor6wTDpTCu0EaH8=
+golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 h1:/yRP+0AN7mf5DkD3BAI6TOFnd51gEoDEb8o35jIFtgw=
+golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691/go.mod h1:FXUEEKJgO7OQYeo8N01OfiKP8RXMtf6e8aTskBGqWdc=
