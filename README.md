@@ -8,6 +8,15 @@
     git submodule update --init
     export PICO_SDK_PATH=~/Repos/pico-sdk/
 
+## Install `pioasm` tool
+
+    cd ~/Repos/pico-sdk/tools/pioasm/
+    mkdir build
+    cd build/
+    cmake ..
+    make -j
+    sudo make install
+
 ## Picotool
 
     git clone https://github.com/raspberrypi/picotool.git
