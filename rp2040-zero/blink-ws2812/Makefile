@@ -8,7 +8,7 @@ clean:
 	rm -f main.elf main.uf2
 
 flash: main.uf2
-	tinygo flash -target $(TARGET) -monitor
+	tinygo flash -target $(TARGET)
 
 monitor: main.uf2
 	tinygo monitor -target $(TARGET)
