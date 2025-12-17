@@ -3,11 +3,11 @@ module main
 go 1.23.2
 
 require (
-	github.com/soypat/cyw43439 v0.0.0-20250106095300-90bf0c1db251
-	github.com/soypat/seqs v0.0.0-20250103132650-f7090396d4a4
+	github.com/soypat/cyw43439 v0.0.0-20251110224555-0a1d121ea3af
+	github.com/soypat/seqs v0.0.0-20250630134107-01c3f05666ba
 )
 
 require (
-	github.com/tinygo-org/pio v0.0.0-20231216154340-cd888eb58899 // indirect
-	golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691 // indirect
+	github.com/tinygo-org/pio v0.2.0 // indirect
+	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
 )
