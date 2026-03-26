@@ -17,7 +17,7 @@ var (
 )
 
 func main() {
-    var neo machine.Pin = machine.NEOPIXEL
+    var neo machine.Pin = neoPixelPin
     neo.Configure(machine.PinConfig{Mode: machine.PinOutput})
     ws := ws2812.NewWS2812(neo)
     for {
