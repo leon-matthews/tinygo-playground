@@ -2,7 +2,7 @@ TARGET := waveshare-rp2040-zero
 
 .PHONY: build clean flash monitor
 
-build: main.elf
+build: main.uf2
 
 clean:
 	rm -f main.elf main.uf2
