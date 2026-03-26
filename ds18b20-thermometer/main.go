@@ -1,20 +1,18 @@
 package main
 
-// DS18B20 1-Wire temperature sensor example for the Waveshare RP2040 Zero.
+// DS18B20 1-Wire temperature sensor example.
 //
-// Connect one or more DS18B20 sensors to GP26 with a 4.7 kΩ pull-up resistor
-// to 3.3 V. Temperature readings are sent over the USB serial debug connection.
+// Connect one or more DS18B20 sensors to the oneWirePin defined for your target
+// (see pins_*.go) with a 4.7 kΩ pull-up resistor to 3.3 V. Temperature
+// readings are sent over the USB serial debug connection.
 
 import (
 	"fmt"
-	"machine"
 	"time"
 
 	"tinygo.org/x/drivers/ds18b20"
 	"tinygo.org/x/drivers/onewire"
 )
-
-const oneWirePin = machine.GP26
 
 func main() {
 	wire := onewire.New(oneWirePin)
