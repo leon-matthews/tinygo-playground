@@ -9,11 +9,11 @@ import (
 	pio "github.com/tinygo-org/pio/rp2-pio"
 	"github.com/tinygo-org/pio/rp2-pio/piolib"
 
-    "blink/rainbow"
+    "rainbow-rp2-pio/rainbow"
 )
 
 func main() {
-    led := newNeoPixel(machine.NEOPIXEL)
+    led := newNeoPixel(neoPixelPin)
 
     for {
         for colour := range rainbow.Rainbow() {
