@@ -1,3 +1,4 @@
+// Blink demo using Raspberry Pi specific PIO driver
 package main
 
 import (
