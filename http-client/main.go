@@ -13,7 +13,7 @@ import (
 	"github.com/soypat/seqs/httpx"
 	"github.com/soypat/seqs/stacks"
 
-    "main/common"
+    "http-client/common"
 )
 
 const connTimeout = 5 * time.Second

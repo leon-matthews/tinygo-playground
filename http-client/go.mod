@@ -1,6 +1,6 @@
-module main
+module http-client
 
-go 1.23.2
+go 1.25.8
 
 require (
 	github.com/soypat/cyw43439 v0.0.0-20251110224555-0a1d121ea3af
