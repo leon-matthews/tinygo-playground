@@ -8,8 +8,8 @@ build: main.uf2
 clean:
 	rm -f main.elf main.uf2
 
-flash: main.uf2
-	tinygo flash -target $(TARGET) -monitor
+flash:
+	tinygo flash -target $(TARGET) -monitor .
 
 monitor: main.uf2
 	tinygo monitor -target $(TARGET)
