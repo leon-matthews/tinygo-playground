@@ -1,18 +1,19 @@
+// Package main is an example for one or two Waveshare RP2350 CAN boards
 package main
 
 import (
 	"fmt"
+	"machine"
 	"time"
 
 	"tinygo.org/x/drivers/mcp2515"
-
-	"machine"
 )
 
 func main() {
 	// Onboard LED
 	led := machine.GPIO25
 	led.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	led.High()
 
 	// Configure SPI for CAN
 	cs := machine.GPIO9
@@ -26,7 +27,7 @@ func main() {
 		Mode:      0, // XL2515 relies on SPI Mode 0
 	})
 	if err != nil {
-		failMessage("Failed to configure SPI1:" + err.Error())
+		fatal("Failed to configure SPI1:" + err.Error())
 		return
 	}
 
@@ -35,44 +36,63 @@ func main() {
 	can.Configure(mcp2515.Configuration{})
 	err = can.Begin(mcp2515.CAN500kBps, mcp2515.Clock8MHz)
 	if err != nil {
-		failMessage("Begin CAN: " + err.Error())
+		fatal("Begin CAN: " + err.Error())
 	}
 
-	// Read CNF1 register from CAN controller
-	// LED on during CAN TX & RX
+	// Bidirectional TX/RX Test
+	// LED on during real TX, LED off for loopback
 	for {
-		// LED on
-		led.High()
-
-		// CAN TX
-		err = can.Tx(0x111, 8, []byte{0x00, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA})
+		mode, err := can.Mode()
 		if err != nil {
-			failMessage("CAN: " + err.Error())
+			fatal(err.Error())
+		}
+
+		if mode == mcp2515.ModeNormal {
+			// Send "Hello" to the real world
+			data := []byte("Hello")
+			err = can.Tx(0x111, uint8(len(data)), data)
+			if err != nil {
+				fmt.Println("CAN: " + err.Error())
+			}
+
+			// Switch back to loopback
+			led.Low()
+			err = can.SetMode(mcp2515.ModeLoopback)
+			if err != nil {
+				fatal("Set mode: " + err.Error())
+			}
+		} else if mode == mcp2515.ModeLoopback {
+			// Send "Loopback" to myself
+			data := []byte("Loopback")
+			err = can.Tx(0x100, uint8(len(data)), data)
+			if err != nil {
+				fmt.Println("CAN: " + err.Error())
+			}
+
+			// Switch back to normal mode
+			led.High()
+			err = can.SetMode(mcp2515.ModeNormal)
+			if err != nil {
+				fatal("Set mode: " + err.Error())
+			}
 		}
 
 		// CAN RX?
 		if can.Received() {
 			msg, err := can.Rx()
 			if err != nil {
-				failMessage("CAN:" + err.Error())
+				fmt.Println("CAN:" + err.Error())
 			}
-			fmt.Printf("CAN-ID: %03X dlc: %d data: ", msg.ID, msg.Dlc)
-			for _, b := range msg.Data {
-				fmt.Printf("%02X ", b)
-			}
-			fmt.Println()
+			fmt.Printf("CAN-ID: %03X dlc: %d data: %s\n", msg.ID, msg.Dlc, msg.Data)
 		}
-
-		// LED off
-		led.Low()
 
 		time.Sleep(time.Second * 1)
 	}
 }
 
-func failMessage(msg string) {
+func fatal(msg string) {
 	for {
-		println(msg)
+		fmt.Println("FATAL " + msg)
 		time.Sleep(1 * time.Second)
 	}
 }
