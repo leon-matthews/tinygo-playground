@@ -1,5 +1,7 @@
 TARGET ?= pico
-export GOTOOLCHAIN := go1.25.8
+
+# Set only if installed Go not compatible with TinyGo
+# export GOTOOLCHAIN := go1.27.1
 
 .PHONY: build clean flash monitor
 
