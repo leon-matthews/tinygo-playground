@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/soypat/cyw43439"
 	"github.com/soypat/lneto/ipv4"
 	"github.com/soypat/lneto/x/xnet"
 )
@@ -25,10 +26,10 @@ var (
 const (
 	hostname  = "ntp-pico"
 	ntpHost   = "pool.ntp.org"
-	syncEvery = 60 * time.Minute
+	syncEvery = 15 * time.Minute
 
 	// serialWait gives the USB serial monitor time to attach before we log.
-	serialWait = 2 * time.Second
+	serialWait = 1 * time.Second
 
 	// Both DNS and NTP are single request/response exchanges over UDP, so the
 	// same patience suits each of them.
@@ -43,34 +44,67 @@ func main() {
 	time.Sleep(serialWait)
 	logger.Info("starting NTP client")
 
-	stack, err := connectNetwork(logger)
-	if err != nil {
-		panic("network setup failed:" + err.Error())
-	}
-	syncClockForever(stack, logger)
+	// The radio claims PIO program space, a state machine and a DMA channel that
+	// it never gives back, so the device is made exactly once per boot.
+	dev := cyw43439.NewPicoWDevice()
+	stack := connectNetwork(dev, logger)
+
+	// Start NTP goroutine
+	go syncClockForever(stack, logger)
+
+	// Don't exit!
+	select {}
 }
 
-// connectNetwork joins the wifi network and acquires a DHCP lease.
+// connectNetwork joins the wifi network and acquires a DHCP lease, retrying
+// each step until it succeeds.
 //
-// The returned stack is ready to use; a goroutine keeps its frames moving.
-func connectNetwork(logger *slog.Logger) (xnet.StackRetrying, error) {
-	w, err := joinWifi(wifiSSID, wifiPassword, hostname, logger)
-	if err != nil {
-		return xnet.StackRetrying{}, err
+// The returned stack is ready to use; a goroutine keeps its frames moving. dev
+// is reset in place between join attempts rather than remade, because a second
+// device would claim PIO and DMA resources the first one still holds.
+func connectNetwork(dev *cyw43439.Device, logger *slog.Logger) xnet.StackRetrying {
+	var w *wifi
+	for attempt := uint(0); ; attempt++ {
+		var err error
+		w, err = joinWifi(dev, wifiSSID, wifiPassword, hostname, logger)
+		if err != nil {
+			wait := connectBackoff(attempt)
+			logger.Error("wifi join failed",
+				slog.String("err", err.Error()),
+				slog.Duration("retry", wait),
+			)
+
+			// The radio is left mid-handshake, and Init in joinWifi is the way back.
+			dev.Reset()
+			time.Sleep(wait)
+			continue
+		}
+		break
 	}
 
-	// Nothing on the network works until frames are being moved.
+	// Nothing on the network works until frames are being moved. This runs for
+	// the life of the program: the join above is the last step that can fail in
+	// a way that would strand it.
 	go w.exchangeFramesForever()
 
-	dhcp, err := w.setupDHCP()
-	if err != nil {
-		return xnet.StackRetrying{}, err
+	for attempt := uint(0); ; attempt++ {
+		dhcp, err := w.setupDHCP()
+		if err != nil {
+			wait := connectBackoff(attempt)
+			logger.Error("DHCP failed",
+				slog.String("err", err.Error()),
+				slog.Duration("retry", wait),
+			)
+			time.Sleep(wait)
+			continue
+		}
+		logger.Info("DHCP complete",
+			slog.String("addr", ipv4.String(dhcp.AssignedAddr4)),
+			slog.Any("dns", dhcp.DNSServers),
+		)
+		break
 	}
-	logger.Info("DHCP complete",
-		slog.String("addr", ipv4.String(dhcp.AssignedAddr4)),
-		slog.Any("dns", dhcp.DNSServers),
-	)
-	return w.stack.StackRetrying(backoff), nil
+	return w.stack.StackRetrying(protocolBackoff)
 }
 
 // syncClockForever corrects the system clock from ntpHost every syncEvery.
@@ -98,15 +132,15 @@ func syncClockForever(stack xnet.StackRetrying, logger *slog.Logger) {
 // The host is resolved on every call rather than once at startup: pool.ntp.org
 // hands out a different set of servers each time, which is how the pool
 // spreads load and routes around servers that have gone away.
-func queryNTP(stack xnet.StackRetrying) (server netip.Addr, offset time.Duration, err error) {
+func queryNTP(stack xnet.StackRetrying) (netip.Addr, time.Duration, error) {
 	addrs, err := stack.DoLookupIP(ntpHost, queryTimeout, queryRetries)
 	if err != nil {
-		return server, 0, errors.New("DNS lookup failed: " + err.Error())
+		return netip.Addr{}, 0, errors.New("DNS lookup failed: " + err.Error())
 	}
-	server = addrs[0]
-	offset, err = stack.DoNTP(server, queryTimeout, queryRetries)
+	server := addrs[0]
+	offset, err := stack.DoNTP(server, queryTimeout, queryRetries)
 	if err != nil {
-		return server, 0, errors.New("NTP request failed for " + server.String() + ": " + err.Error())
+		return netip.Addr{}, 0, errors.New("NTP request failed for " + server.String() + ": " + err.Error())
 	}
 	return server, offset, nil
 }

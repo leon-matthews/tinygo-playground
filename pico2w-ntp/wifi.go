@@ -42,10 +42,10 @@ type wifi struct {
 // joinWifi initialises the CYW43439 radio and joins the named network.
 //
 // The stack has no address yet; call [wifi.setupDHCP] for that. No frames move
-// until [wifi.exchangeFramesForever] is running.
-func joinWifi(ssid, password, hostname string, logger *slog.Logger) (*wifi, error) {
+// until [wifi.exchangeFramesForever] is running. dev must be newly made or
+// freshly [cyw43439.Device.Reset]; it is initialised here either way.
+func joinWifi(dev *cyw43439.Device, ssid, password, hostname string, logger *slog.Logger) (*wifi, error) {
 	start := time.Now()
-	dev := cyw43439.NewPicoWDevice()
 	devcfg := cyw43439.DefaultWifiConfig()
 	devcfg.Logger = logger
 	err := dev.Init(devcfg)
@@ -91,7 +91,7 @@ func joinWifi(ssid, password, hostname string, logger *slog.Logger) (*wifi, erro
 	return &wifi{dev: dev, stack: stack, logger: logger}, nil
 }
 
-// exchangeFramesForever moves ethernet frames between the radio and the stack.
+// exchangeFramesForever moves Ethernet frames between the radio and the stack.
 //
 // Run it in its own goroutine before using the stack. Nothing in lneto has a
 // timer of its own, so every protocol only makes progress while this loop runs.
@@ -125,7 +125,7 @@ func (w *wifi) exchangeFramesForever() {
 //
 // The server chooses the address; it is reported in the returned results.
 func (w *wifi) setupDHCP() (*xnet.DHCPResults, error) {
-	retrying := w.stack.StackRetrying(backoff)
+	retrying := w.stack.StackRetrying(protocolBackoff)
 	results, err := retrying.DoDHCPv4([4]byte{}, dhcpTimeout, dhcpRetries)
 	if err != nil {
 		return nil, err
@@ -143,16 +143,4 @@ func (w *wifi) setupDHCP() (*xnet.DHCPResults, error) {
 	}
 	w.stack.SetGatewayHardwareAddr(gateway)
 	return results, nil
-}
-
-// backoff spaces out protocol retries, doubling each time up to 20ms.
-//
-// Suited to request/response protocols such as DHCP and NTP, not to TCP.
-func backoff(consecutive uint) time.Duration {
-	const (
-		minWait  = 100 * time.Microsecond
-		maxWait  = 20 * time.Millisecond
-		maxShift = 15
-	)
-	return min(minWait<<min(consecutive, maxShift), maxWait)
 }
