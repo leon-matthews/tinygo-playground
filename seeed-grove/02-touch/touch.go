@@ -1,31 +1,33 @@
 package main
 
 import (
-    "time"
+	"time"
 
-    "local.dev/grove/grove"
+	"local.dev/grove/grove"
 )
+
+const position = 0
 
 var shield grove.ShieldXiao
 
 func main() {
-    // Touch sensor pulls data line high while a finger is present
-    touch := shield.Connector(0).PinInputPulldown()
+	// Touch sensor pulls data line high while a finger is present
+	touch := shield.Connector(position).PinInputPulldown()
 
-    lastPrint := time.Now()
-    last := false
-    for {
-        beingTouched := touch.GetLevel()
-        if beingTouched && time.Since(lastPrint) > time.Second {
-            // Print status only once a second
-            println("Somebody is touching me!")
-            lastPrint = time.Now()
-        } else if last && !beingTouched {
-            // First loop (only) after letting go
-            println("I'm getting cold, please touch me.")
-        }
+	lastPrint := time.Now()
+	last := false
+	for {
+		beingTouched := touch.GetLevel()
+		if beingTouched && time.Since(lastPrint) > time.Second {
+			// Print status only once a second
+			println("Somebody is touching me!")
+			lastPrint = time.Now()
+		} else if last && !beingTouched {
+			// First loop (only) after letting go
+			println("I'm getting cold, please touch me.")
+		}
 
-        last = beingTouched
-        time.Sleep(10 * time.Millisecond)
-    }
+		last = beingTouched
+		time.Sleep(10 * time.Millisecond)
+	}
 }

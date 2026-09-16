@@ -15,3 +15,8 @@ buzzer: 01-buzzer/buzzer.go
 touch: 02-touch/touch.go
 	go build -o /dev/null $<
 	tinygo flash --monitor --target=$(TARGET) $<
+
+.PHONY: light
+light: 03-light/light.go
+	go build -o /dev/null $<
+	tinygo flash --monitor --target=$(TARGET) $<
