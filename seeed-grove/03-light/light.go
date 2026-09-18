@@ -8,14 +8,23 @@ import (
 
 const position = 2
 
-var shield grove.ShieldXiao
+var (
+	light  grove.LightSensor
+	shield grove.ShieldXiao
+)
 
 func main() {
-    // Light sensor returns an analog voltage
-    adc := shield.Connector(2).ADC()
+	// Light sensor returns an analog voltage
+	const numSamples = 32
+	light.Configure(shield.Connector(position).ADC(), numSamples)
 
 	for {
-		println("Light?", adc.ReadAnalogValue())
+		lux, saturated := light.Lux()
+		if saturated {
+			println(">", grove.MaxLux, "lux")
+		} else {
+			println(lux, "lux")
+		}
 		time.Sleep(3 * time.Second)
 	}
 }
